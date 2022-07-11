@@ -7,10 +7,10 @@ from . import util, html
 from subprocess import Popen, PIPE
 
 
-# try:
-#     import wandb
-# except ImportError:
-#     print('Warning: wandb package cannot be found. The option "--use_wandb" will result in error.')
+try:
+    import wandb
+except ImportError:
+    print('Warning: wandb package cannot be found. The option "--use_wandb" will result in error.')
 
 if sys.version_info[0] == 2:
     VisdomExceptionBase = Exception
