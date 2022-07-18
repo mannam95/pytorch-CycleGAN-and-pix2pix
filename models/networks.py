@@ -155,8 +155,8 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
         net = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif netG == 'unet_256':
         net = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
-    elif netG == 'unet_512_stride_4':
-        net = UnetGenerator_512_Stride_4(input_nc, output_nc, norm_layer=norm_layer, use_dropout=use_dropout)
+    elif netG == 'unet_512_custom':
+        net = UnetGenerator_Custom(input_nc, output_nc, norm_layer=norm_layer, use_dropout=use_dropout)
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
     return init_net(net, init_type, init_gain, gpu_ids)
@@ -538,7 +538,7 @@ class UnetSkipConnectionBlock(nn.Module):
             return torch.cat([x, self.model(x)], 1)
 
 
-class UnetGenerator_512_Stride_4(nn.Module):
+class UnetGenerator_Custom(nn.Module):
     """Create a Unet-based generator"""
 
     def __init__(self, input_nc, output_nc, norm_layer=nn.BatchNorm2d, use_dropout=False):
@@ -551,24 +551,24 @@ class UnetGenerator_512_Stride_4(nn.Module):
 
         We construct the U-Net from the innermost layer to the outermost layer.
         It is a recursive process.
-        This is modifed generator from the paper, as we wanted to test 512x512x1 input image with stride 4.
+        This is modifed generator from the paper, as we wanted to test 512x512x1 input image with stride 4, kernel-size 8, padding 2.
         """
-        super(UnetGenerator_512_Stride_4, self).__init__()
+        super(UnetGenerator_Custom, self).__init__()
 
         # Below are the inputs and outputs of each layer in UNet.
-        downsample_inputs_outputs = [[512, 512], [512, 512], [128, 512], [input_nc, 128]]
-        upsample_inputs_outputs = [[512, 512], [1024, 512], [1024, 128], [256, output_nc]]
+        downsample_inputs_outputs = [[256, 512], [128, 256], [64, 128], [input_nc, 64]]
+        upsample_inputs_outputs = [[512, 256], [512, 128], [256, 64], [128, output_nc]]
 
         # construct unet structure
         # Inner most layer.
-        unet_block = UnetSkipConnectionBlock_512_Stride_4(downsample_inputs_outputs[0], upsample_inputs_outputs[0], submodule=None, norm_layer=norm_layer, innermost=True)
+        unet_block = UnetSkipConnectionBlock_Custom(downsample_inputs_outputs[0], upsample_inputs_outputs[0], submodule=None, norm_layer=norm_layer, innermost=True)
 
-        unet_block = UnetSkipConnectionBlock_512_Stride_4(downsample_inputs_outputs[1], upsample_inputs_outputs[1], submodule=unet_block, norm_layer=norm_layer, use_dropout=use_dropout)
+        unet_block = UnetSkipConnectionBlock_Custom(downsample_inputs_outputs[1], upsample_inputs_outputs[1], submodule=unet_block, norm_layer=norm_layer, use_dropout=use_dropout)
 
-        unet_block = UnetSkipConnectionBlock_512_Stride_4(downsample_inputs_outputs[2], upsample_inputs_outputs[2], submodule=unet_block, norm_layer=norm_layer, use_dropout=use_dropout)
+        unet_block = UnetSkipConnectionBlock_Custom(downsample_inputs_outputs[2], upsample_inputs_outputs[2], submodule=unet_block, norm_layer=norm_layer, use_dropout=use_dropout)
 
         # Outer most layer.
-        unet_block = UnetSkipConnectionBlock_512_Stride_4(downsample_inputs_outputs[3], upsample_inputs_outputs[3], submodule=unet_block, norm_layer=norm_layer, outermost=True)
+        unet_block = UnetSkipConnectionBlock_Custom(downsample_inputs_outputs[3], upsample_inputs_outputs[3], submodule=unet_block, norm_layer=norm_layer, outermost=True)
 
         self.model = unet_block
 
@@ -577,7 +577,7 @@ class UnetGenerator_512_Stride_4(nn.Module):
         return self.model(input)
 
 
-class UnetSkipConnectionBlock_512_Stride_4(nn.Module):
+class UnetSkipConnectionBlock_Custom(nn.Module):
     """Defines the Unet submodule with skip connection.
         X -------------------identity----------------------
         |-- downsampling -- |submodule| -- upsampling --|
@@ -596,31 +596,31 @@ class UnetSkipConnectionBlock_512_Stride_4(nn.Module):
             norm_layer          -- normalization layer
             use_dropout (bool)  -- if use dropout layers.
         """
-        super(UnetSkipConnectionBlock_512_Stride_4, self).__init__()
+        super(UnetSkipConnectionBlock_Custom, self).__init__()
         self.outermost = outermost
         if type(norm_layer) == functools.partial:
             use_bias = norm_layer.func == nn.InstanceNorm2d
         else:
             use_bias = norm_layer == nn.InstanceNorm2d
 
-        downconv = nn.Conv2d(in_channels=down_inp_oup[0], out_channels=down_inp_oup[1], kernel_size=4, stride=4, padding=0, bias=use_bias)
+        downconv = nn.Conv2d(in_channels=down_inp_oup[0], out_channels=down_inp_oup[1], kernel_size=8, stride=4, padding=2, bias=use_bias)
         downrelu = nn.LeakyReLU(0.2, True)
         downnorm = norm_layer(down_inp_oup[1])
         uprelu = nn.ReLU(True)
         upnorm = norm_layer(down_inp_oup[0])
 
         if outermost:
-            upconv = nn.ConvTranspose2d(in_channels=up_inp_oup[0], out_channels=up_inp_oup[1], kernel_size=4, stride=4, padding=0)
+            upconv = nn.ConvTranspose2d(in_channels=up_inp_oup[0], out_channels=up_inp_oup[1], kernel_size=8, stride=4, padding=2)
             down = [downconv]
             up = [uprelu, upconv, nn.Tanh()]
             model = down + [submodule] + up
         elif innermost:
-            upconv = nn.ConvTranspose2d(in_channels=up_inp_oup[0], out_channels=up_inp_oup[1], kernel_size=4, stride=4, padding=0, bias=use_bias)
+            upconv = nn.ConvTranspose2d(in_channels=up_inp_oup[0], out_channels=up_inp_oup[1], kernel_size=8, stride=4, padding=2, bias=use_bias)
             down = [downrelu, downconv]
             up = [uprelu, upconv, upnorm]
             model = down + up
         else:
-            upconv = nn.ConvTranspose2d(in_channels=up_inp_oup[0], out_channels=up_inp_oup[1], kernel_size=4, stride=4, padding=0, bias=use_bias)
+            upconv = nn.ConvTranspose2d(in_channels=up_inp_oup[0], out_channels=up_inp_oup[1], kernel_size=8, stride=4, padding=2, bias=use_bias)
             down = [downrelu, downconv, downnorm]
             up = [uprelu, upconv, upnorm]
 
