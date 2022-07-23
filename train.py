@@ -34,17 +34,16 @@ if __name__ == '__main__':
     model.setup(opt)               # regular setup: load and print networks; create schedulers
     visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
     total_iters = 0                # the total number of training iterations
+    print_freq_timer = time.time()        # timer for printing training status every print_freq iterations 
 
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
         iter_data_time = time.time()    # timer for data loading per iteration
         epoch_iter = 0                  # the number of training iterations in current epoch, reset to 0 every epoch
         visualizer.reset()              # reset the visualizer: make sure it saves the results to HTML at least once every epoch
-        model.update_learning_rate()    # update learning rates in the beginning of every epoch.
-        print_freq_timer = 0        # timer for printing training status every print_freq iterations    
+        model.update_learning_rate()    # update learning rates in the beginning of every epoch. 
         for i, data in enumerate(dataset):  # inner loop within one epoch
             iter_start_time = time.time()  # timer for computation per iteration
-            print_freq_timer = print_freq_timer + time.time()
             if total_iters % opt.print_freq == 0:
                 t_data = iter_start_time - iter_data_time
 
@@ -64,8 +63,8 @@ if __name__ == '__main__':
                 visualizer.print_current_losses(epoch, epoch_iter, losses, t_comp, t_data)
                 if opt.display_id > 0:
                     visualizer.plot_current_losses(epoch, float(epoch_iter) / dataset_size, losses)
-                print('Until batch %d \t Time Taken: %d mins' % (i, print_freq_timer/60))
-                print_freq_timer = 0
+                print('Epoch %d batch %d \t Time Taken: %d mins' % (epoch, i+1, (time.time() - epoch_start_time)/60))
+                print_freq_timer = time.time()
 
             if total_iters % opt.save_latest_freq == 0:   # cache our latest model every <save_latest_freq> iterations
                 print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
