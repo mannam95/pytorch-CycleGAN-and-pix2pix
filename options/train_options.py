@@ -44,6 +44,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--enc_key_path', type=str, default='./watermarking_loss/encryption_key.npy', help='path of the images which needs to be watermarked.')
         parser.add_argument('--dct_block_size', type=tuple, default=(8, 8), help='dct block size, as of now only 8*8 works')
         parser.add_argument('--dwt_level', type=str, default='LL', help='which dwt block to embed the watermark')
+        parser.add_argument('--lambda_WL', type=float, default=100.0, help='weight for WL loss')
 
         self.isTrain = True
         return parser
