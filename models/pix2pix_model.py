@@ -53,9 +53,9 @@ class Pix2PixModel(BaseModel):
         self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake']
         if self.opt.is_watermark_loss:
             self.loss_names.append('W_L')
-            org_watermark = org_watermark_as_array().astype(float)
-            org_watermark = np.expand_dims(org_watermark, axis=0)
-            org_watermark = np.expand_dims(org_watermark, axis=0)
+            self.org_watermark = org_watermark_as_array().astype(float)
+            self.org_watermark = np.expand_dims(self.org_watermark, axis=0)
+            self.org_watermark = np.expand_dims(self.org_watermark, axis=0)
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
         self.visual_names = ['real_A', 'fake_B', 'real_B']
         # specify the models you want to save to the disk. The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>
@@ -125,8 +125,8 @@ class Pix2PixModel(BaseModel):
         if self.opt.is_watermark_loss:
             pred_watermark = self.watermark_instance.extract_watermark(self.fake_B)
             pred_watermark_t = torch.from_numpy(pred_watermark)
-            org_watermark = np.tile(org_watermark, (len(pred_watermark),1,1,1))
-            self.org_watermark_t = torch.from_numpy(org_watermark)
+            self.org_watermark = np.tile(self.org_watermark, (len(pred_watermark),1,1,1))
+            self.org_watermark_t = torch.from_numpy(self.org_watermark)
             self.loss_W_L = self.criterionL1(pred_watermark_t, self.org_watermark_t) * self.opt.lambda_WL
         # combine loss and calculate gradients
         self.loss_G = self.loss_G_GAN + self.loss_G_L1 + self.loss_W_L
