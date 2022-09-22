@@ -36,5 +36,14 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--lr_policy', type=str, default='linear', help='learning rate policy. [linear | step | plateau | cosine]')
         parser.add_argument('--lr_decay_iters', type=int, default=50, help='multiply by a gamma every lr_decay_iters iterations')
 
+
+        # watermarking loss parameters
+        parser.add_argument('--is_watermark_loss', action='store_true', help='Extraction - True if embedding should happen.')
+        parser.add_argument('--is_first_logo', action='store_false', help='if specified, then first logo will be used.')
+        parser.add_argument('--is_enc_watermark', action='store_false', help='if specified, then watermark will not be encrypted.')
+        parser.add_argument('--enc_key_path', type=str, default='./watermarking_loss/encryption_key.npy', help='path of the images which needs to be watermarked.')
+        parser.add_argument('--dct_block_size', type=tuple, default=(8, 8), help='dct block size, as of now only 8*8 works')
+        parser.add_argument('--dwt_level', type=str, default='LL', help='which dwt block to embed the watermark')
+
         self.isTrain = True
         return parser

@@ -1,6 +1,9 @@
 import torch
+from watermarking_loss.helpers import org_watermark_as_array
+from watermarking_loss.perform_extraction import Extract_WaterMark
 from .base_model import BaseModel
 from . import networks
+import numpy as np
 
 
 class Pix2PixModel(BaseModel):
@@ -43,8 +46,18 @@ class Pix2PixModel(BaseModel):
             opt (Option class)-- stores all the experiment flags; needs to be a subclass of BaseOptions
         """
         BaseModel.__init__(self, opt)
+        
+        self.watermark_instance = Extract_WaterMark(opt)
+
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
         self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake']
+        if self.opt.is_watermark_loss:
+            self.loss_names.append('W_L')
+            org_watermark = org_watermark_as_array().astype(float)
+            org_watermark = np.expand_dims(org_watermark, axis=0)
+            org_watermark = np.expand_dims(org_watermark, axis=0)
+            org_watermark = np.tile(org_watermark, (self.opt.batch_size,1,1,1))
+            self.org_watermark_t = torch.from_numpy(org_watermark)
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
         self.visual_names = ['real_A', 'fake_B', 'real_B']
         # specify the models you want to save to the disk. The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>
@@ -109,8 +122,14 @@ class Pix2PixModel(BaseModel):
         self.loss_G_GAN = self.criterionGAN(pred_fake, True)
         # Second, G(A) = B
         self.loss_G_L1 = self.criterionL1(self.fake_B, self.real_B) * self.opt.lambda_L1
+        # Calculate water mark loss
+        self.loss_W_L = 0
+        if self.opt.is_watermark_loss:
+            pred_watermark = self.watermark_instance.extract_watermark(self.fake_B)
+            pred_watermark_t = torch.from_numpy(pred_watermark)
+            self.loss_W_L = self.criterionL1(pred_watermark_t, self.org_watermark_t) * self.opt.lambda_L1
         # combine loss and calculate gradients
-        self.loss_G = self.loss_G_GAN + self.loss_G_L1
+        self.loss_G = self.loss_G_GAN + self.loss_G_L1 + self.loss_W_L
         self.loss_G.backward()
 
     def optimize_parameters(self):
