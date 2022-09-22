@@ -181,11 +181,11 @@ class Visualizer():
                 wandb_image = wandb.Image(image_numpy)
                 table_row.append(wandb_image)
                 ims_dict[label] = wandb_image
-            self.wandb_run.log(ims_dict)
+            self.wandb_run.log(ims_dict, commit=False)
             if epoch != self.current_epoch:
                 self.current_epoch = epoch
                 result_table.add_data(*table_row)
-                self.wandb_run.log({"Result": result_table})
+                self.wandb_run.log({"Result": result_table}, commit=False)
 
         if self.use_html and (save_result or not self.saved):  # save images to an HTML file if they haven't been saved.
             self.saved = True
@@ -235,7 +235,12 @@ class Visualizer():
         except VisdomExceptionBase:
             self.create_visdom_connections()
         if self.use_wandb:
-            self.wandb_run.log(losses)
+            self.wandb_run.log(losses, commit=False)
+    
+    # commit the wandb logs per step at once.
+    def commit_wandb_logs(self):
+        if self.use_wandb:
+            self.wandb_run.log({}, commit=True)
 
     # losses: same format as |losses| of plot_current_losses
     def print_current_losses(self, epoch, iters, losses, t_comp, t_data):
