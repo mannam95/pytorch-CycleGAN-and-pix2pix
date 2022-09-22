@@ -127,7 +127,7 @@ class Pix2PixModel(BaseModel):
         if self.opt.is_watermark_loss:
             pred_watermark = self.watermark_instance.extract_watermark(self.fake_B)
             pred_watermark_t = torch.from_numpy(pred_watermark)
-            self.loss_W_L = self.criterionL1(pred_watermark_t, self.org_watermark_t) * self.opt.lambda_L1
+            self.loss_W_L = self.criterionL1(pred_watermark_t, self.org_watermark_t) * self.opt.lambda_WL
         # combine loss and calculate gradients
         self.loss_G = self.loss_G_GAN + self.loss_G_L1 + self.loss_W_L
         self.loss_G.backward()
