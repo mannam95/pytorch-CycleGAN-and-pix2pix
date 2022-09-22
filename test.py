@@ -57,7 +57,8 @@ if __name__ == '__main__':
         wandb_run._label(repo='CycleGAN-and-pix2pix')
 
     # create a website
-    web_dir = os.path.join(opt.results_dir, opt.name, '{}_{}'.format(opt.phase, opt.epoch))  # define the website directory
+    gen_imgs_dir = os.path.basename(opt.dataroot) + '_ep'
+    web_dir = os.path.join(opt.results_dir, opt.name, '{}_{}'.format(gen_imgs_dir, opt.epoch))  # define the website directory
     if opt.load_iter > 0:  # load_iter is 0 by default
         web_dir = '{:s}_iter{:d}'.format(web_dir, opt.load_iter)
     print('creating web directory', web_dir)
