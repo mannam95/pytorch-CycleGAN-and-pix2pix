@@ -122,3 +122,17 @@ def org_watermark_as_array():
             ]
         )
     return watermark_img_pi
+
+def read_image(image_path):
+    """
+    This function reads the image from given path
+
+    :param image_path: file path
+    :return: Returns the image array
+    """
+    img = Image.open(image_path)
+    img = img.convert(mode='L')  # convert image to grayscale
+    img = np.asarray(img)
+    converted_array = (img != 0).astype(int)
+
+    return converted_array

@@ -16,6 +16,11 @@ class Extract_WaterMark():
         self.options = options
         self.encrypt_decrypt = Encrypt_Decrypt(options)
 
+    def get_original_watermark(self):
+        """Get the original watermark."""
+        org_watermark_img = self.encrypt_decrypt.get_watermark_img()
+        org_watermark_img = np.expand_dims(org_watermark_img, axis=0)
+        return org_watermark_img
 
     def extract_watermark(self, img_tensor):
         """
@@ -24,7 +29,9 @@ class Extract_WaterMark():
         :param img: image which watermark needs to be extracted.
         :return: Returns the extracted watermark image
         """
-        extracted_watermarks = []
+        extracted_watermarks_list = []
+        orginal_watermarks_list = []
+        org_watermark_img = self.get_original_watermark()
         for cur_img in img_tensor:
             image_numpy = cur_img.cpu().detach().numpy()
             image_numpy = np.squeeze(image_numpy, axis=0)
@@ -45,16 +52,16 @@ class Extract_WaterMark():
             watermark_bits = get_watermarkbits_from_dct_blocks(dct_blocks)
 
             # get the original watermark image.
-            original_watermark_image = self.encrypt_decrypt.watermark_image_decryption(watermark_bits)
+            extracted_watermark_image = watermark_bits
 
             # Convert the data type to uint8.
-            original_watermark_image =  np.uint8(original_watermark_image)
+            extracted_watermark_image =  np.uint8(extracted_watermark_image)
 
-            original_watermark_image = np.expand_dims(original_watermark_image, axis=0)
-
-            # Convert the int values to binary.
-            # original_watermark_image = original_watermark_image > 0
+            extracted_watermark_image = np.expand_dims(extracted_watermark_image, axis=0)
             
-            extracted_watermarks.append(original_watermark_image)
-        extracted_watermarks = np.array(extracted_watermarks).astype(float)
-        return extracted_watermarks
+            extracted_watermarks_list.append(extracted_watermark_image)
+            orginal_watermarks_list.append(org_watermark_img)
+        extracted_watermarks_list = np.array(extracted_watermarks_list).astype(float)
+        orginal_watermarks_list = np.array(orginal_watermarks_list).astype(float)
+
+        return (orginal_watermarks_list, extracted_watermarks_list)

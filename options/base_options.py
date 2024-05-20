@@ -60,12 +60,11 @@ class BaseOptions():
 
         # watermarking loss parameters
         parser.add_argument('--is_watermark_loss', action='store_true', help='Extraction - True if embedding should happen.')
-        parser.add_argument('--is_first_logo', action='store_false', help='if specified, then first logo will be used.')
-        parser.add_argument('--is_enc_watermark', action='store_false', help='if specified, then watermark will not be encrypted.')
-        parser.add_argument('--enc_key_path', type=str, default='./watermarking_loss/encryption_key.npy', help='path of the images which needs to be watermarked.')
-        parser.add_argument('--dct_block_size', type=tuple, default=(8, 8), help='dct block size, as of now only 8*8 works')
-        parser.add_argument('--dwt_level', type=str, default='LL', help='which dwt block to embed the watermark')
         parser.add_argument('--lambda_WL', type=float, default=100.0, help='weight for WL loss')
+        parser.add_argument('--logo_name', type=str, default='pi', help='name of the logo to be used for watermarking. options;pi, xut, hourglass, custom')
+        parser.add_argument('--custom_logo_path', type=str, default='', help='path of the custom logo to be used for watermarking.')
+        parser.add_argument('--dct_block_size', type=tuple, default=(8, 8), help='dct block size, as of now only 8*8 works')
+        parser.add_argument('--dwt_level', type=str, default='LL', help='which dwt block to embed the watermark. options;LL, LH, HL, HH')
         
         self.initialized = True
         return parser
