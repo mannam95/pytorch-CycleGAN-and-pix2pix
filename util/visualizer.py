@@ -75,6 +75,7 @@ class Visualizer():
         self.name = opt.name
         self.port = opt.display_port
         self.saved = False
+        self.wandb_key = opt.wandb_key
         self.use_wandb = opt.use_wandb
         self.wandb_project_name = opt.wandb_project_name
         self.current_epoch = 0
@@ -87,6 +88,8 @@ class Visualizer():
                 self.create_visdom_connections()
 
         if self.use_wandb:
+            if self.wandb_key:
+                wandb.login(key=self.wandb_key)
             self.wandb_run = wandb.init(project=self.wandb_project_name, name=opt.name, config=opt) if not wandb.run else wandb.run
             self.wandb_run._label(repo='CycleGAN-and-pix2pix')
 
