@@ -68,7 +68,7 @@ class Extract_WaterMark():
         """
         org_watermark_img = self.get_original_watermark()
 
-        with ProcessPoolExecutor() as executor:
+        with ProcessPoolExecutor(max_workers=8) as executor:
             futures = [executor.submit(self.extract_watermark_single_image, cur_img.cpu().detach().numpy(), self.options) for cur_img in img_tensor]
             extracted_watermarks_list = [future.result() for future in futures]
 
