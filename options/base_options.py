@@ -58,6 +58,8 @@ class BaseOptions():
         parser.add_argument('--use_wandb', action='store_true', help='if specified, then init wandb logging')
         parser.add_argument('--wandb_key', type=str, default='', help='specify wandb key')
         parser.add_argument('--wandb_project_name', type=str, default='IJCB22', help='specify wandb project name')
+        parser.add_argument('--wandb_mode', type=str, default=None, help='specify wandb mode for e.g offline')
+        parser.add_argument('--wandb_dir', type=str, default='./wandb', help='specify wandb directory')
 
         # watermarking loss parameters
         parser.add_argument('--is_watermark_loss', action='store_true', help='Extraction - True if embedding should happen.')

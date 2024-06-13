@@ -78,6 +78,8 @@ class Visualizer():
         self.wandb_key = opt.wandb_key
         self.use_wandb = opt.use_wandb
         self.wandb_project_name = opt.wandb_project_name
+        self.wandb_mode = opt.wandb_mode
+        self.wandb_dir = opt.wandb_dir
         self.current_epoch = 0
         self.ncols = opt.display_ncols
 
@@ -90,7 +92,7 @@ class Visualizer():
         if self.use_wandb:
             if self.wandb_key:
                 wandb.login(key=self.wandb_key)
-            self.wandb_run = wandb.init(project=self.wandb_project_name, name=opt.name, config=opt) if not wandb.run else wandb.run
+            self.wandb_run = wandb.init(project=self.wandb_project_name, name=opt.name, mode=self.wandb_mode, dir=self.wandb_dir, config=opt) if not wandb.run else wandb.run
             self.wandb_run._label(repo='CycleGAN-and-pix2pix')
 
         if self.use_html:  # create an HTML object at <checkpoints_dir>/web/; images will be saved under <checkpoints_dir>/web/images/
